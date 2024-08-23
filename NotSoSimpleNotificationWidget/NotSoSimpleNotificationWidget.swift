@@ -9,16 +9,16 @@ struct NotSoSimpleNotificationWidget: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    ImageSequenceView(frameNames: context.state.frameNames)
+                    ImageSequenceView(frameNames: context.state.frameNames, currentFrame: context.state.currentFrame)
                         .frame(width: 50, height: 50)
                 }
             } compactLeading: {
-                ImageSequenceView(frameNames: context.state.frameNames)
+                ImageSequenceView(frameNames: context.state.frameNames, currentFrame: context.state.currentFrame)
                     .frame(width: 25, height: 25)
             } compactTrailing: {
                 EmptyView()
             } minimal: {
-                ImageSequenceView(frameNames: context.state.frameNames)
+                ImageSequenceView(frameNames: context.state.frameNames, currentFrame: context.state.currentFrame)
                     .frame(width: 20, height: 20)
             }
         }
@@ -29,7 +29,7 @@ struct LiveActivityView: View {
     let context: ActivityViewContext<LiveActivityModelAttributes>
 
     var body: some View {
-        ImageSequenceView(frameNames: context.state.frameNames)
+        ImageSequenceView(frameNames: context.state.frameNames, currentFrame: context.state.currentFrame)
             .frame(width: 75, height: 75)
     }
 }
@@ -40,7 +40,3 @@ struct NotSoSimpleNotificationWidgetBundle: WidgetBundle {
         NotSoSimpleNotificationWidget()
     }
 }
-
-
-
-

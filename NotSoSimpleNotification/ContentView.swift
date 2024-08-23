@@ -1,6 +1,9 @@
 import SwiftUI
 import ActivityKit
 
+import SwiftUI
+import ActivityKit
+
 struct ContentView: View {
     @State private var userInput: String = "Enter Text"
     @State private var selectedPokemon: Int = 1
@@ -20,9 +23,8 @@ struct ContentView: View {
                         .tabItem {
                             Label("Pokémon", systemImage: "sparkles")
                         }
-                    
-                    // New Animation Tab
-                    AnimationView(frameNames: frameNames)
+
+                    AnimationView(frameNames: frameNames, activity: activity)
                         .tabItem {
                             Label("Animation", systemImage: "photo.on.rectangle")
                         }
@@ -38,8 +40,9 @@ struct ContentView: View {
                     Button("Start") {
                         Task {
                             if let gifData = loadGIFData(for: selectedPokemon) {
-                                frameNames = extractAndSaveFrames(from: gifData, for: selectedPokemon) // Save frames for the animation tab
+                                frameNames = extractAndSaveFrames(from: gifData, for: selectedPokemon)
                                 await startLiveActivity(with: userInput, pokemonNumber: selectedPokemon, gifData: gifData)
+                                await animateLiveActivity()
                             }
                         }
                     }
@@ -49,21 +52,12 @@ struct ContentView: View {
         }
     }
 
-    func loadGIFData(for pokemonNumber: Int) -> Data? {
-        guard let path = Bundle.main.path(forResource: "\(pokemonNumber)", ofType: "gif"),
-              let gifData = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-            print("Failed to load GIF for Pokémon \(pokemonNumber)")
-            return nil
-        }
-        return gifData
-    }
-
     func startLiveActivity(with message: String, pokemonNumber: Int, gifData: Data) async {
         await stopLiveActivity()
         let frameNames = extractAndSaveFrames(from: gifData, for: pokemonNumber)
 
         let attributes = LiveActivityModelAttributes(name: "NotSoSimpleNotificationApp")
-        let contentState = LiveActivityModelAttributes.ContentState(message: message, pokemonNumber: pokemonNumber, frameNames: frameNames)
+        let contentState = LiveActivityModelAttributes.ContentState(message: message, pokemonNumber: pokemonNumber, frameNames: frameNames, currentFrame: 0)
         let activityContent = ActivityContent(state: contentState, staleDate: nil)
 
         do {
@@ -77,11 +71,50 @@ struct ContentView: View {
         }
     }
 
+    func animateLiveActivity() async {
+        guard let activity = activity else { return }
+        guard !frameNames.isEmpty else { return }
+
+        let frameRate: Double = 60.0
+        let frameDuration: Double = 1.0 / frameRate
+
+        for i in 0..<frameNames.count {
+            let updatedContentState = LiveActivityModelAttributes.ContentState(
+                message: activity.content.state.message,
+                pokemonNumber: activity.content.state.pokemonNumber,
+                frameNames: activity.content.state.frameNames,
+                currentFrame: i
+            )
+
+            let updatedContent = ActivityContent(state: updatedContentState, staleDate: nil)
+
+            do {
+                await activity.update(updatedContent)
+                try await Task.sleep(nanoseconds: UInt64(frameDuration * 1_000_000_000)) // Sleep between frames
+            } catch {
+                print("Error updating activity: \(error.localizedDescription)")
+            }
+        }
+
+        // Loop the animation
+        await animateLiveActivity()
+    }
+
     func stopLiveActivity() async {
         await activity?.end(dismissalPolicy: .immediate)
         activity = nil
         await clearTemporaryFrames()
     }
+
+    func loadGIFData(for pokemonNumber: Int) -> Data? {
+        guard let path = Bundle.main.path(forResource: "\(pokemonNumber)", ofType: "gif"),
+              let gifData = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+            print("Failed to load GIF for Pokémon \(pokemonNumber)")
+            return nil
+        }
+        return gifData
+    }
+
 
     func extractAndSaveFrames(from gifData: Data, for pokemonNumber: Int) -> [String] {
         var frameNames: [String] = []
@@ -153,18 +186,27 @@ struct ContentView: View {
     }
 }
 
+import SwiftUI
+
 struct AnimationView: View {
     var frameNames: [String]
+    var activity: Activity<LiveActivityModelAttributes>? // Pass the activity
 
     var body: some View {
         VStack {
             if frameNames.isEmpty {
                 Text("No animation to display")
             } else {
-                ImageSequenceView(frameNames: frameNames, animationDuration: 2.0)
-                    .frame(width: 100, height: 100)
-                    .padding()
+                if let activity = activity {
+                    ImageSequenceView(frameNames: frameNames, currentFrame: activity.content.state.currentFrame)
+                        .frame(width: 100, height: 100)
+                        .padding()
+                } else {
+                    Text("No active Live Activity")
+                }
             }
         }
     }
 }
+
+
