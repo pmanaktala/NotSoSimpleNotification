@@ -108,7 +108,7 @@ struct ContentView: View {
         guard let activity = activity else { return }
         guard !frameNames.isEmpty else { return }
 
-        let frameRate: Double = 60.0 // Adjusted frame rate
+        let frameRate: Double = 1.0 // 30 FPS
         let frameDuration: Double = 1.0 / frameRate
 
         for i in 0..<frameNames.count {
@@ -122,15 +122,16 @@ struct ContentView: View {
             let updatedContent = ActivityContent(state: updatedContentState, staleDate: nil)
 
             do {
+                print("Updating activity to frame \(i)")
                 await activity.update(updatedContent)
-                try await Task.sleep(nanoseconds: UInt64(frameDuration * 1_000_000_000)) // Sleep between frames
+                try await Task.sleep(nanoseconds: UInt64(frameDuration * 1_000_000_000)) // Adjust sleep for smoother animation
             } catch {
                 print("Error updating activity: \(error.localizedDescription)")
                 break
             }
         }
 
-        // Loop the animation
+        // Optionally, restart the animation or implement a different strategy
         Task {
             await animateLiveActivity()
         }

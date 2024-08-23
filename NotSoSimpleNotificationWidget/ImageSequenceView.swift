@@ -10,6 +10,9 @@ struct ImageSequenceView: View {
             let sharedContainerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.frames.shared")!
             let imagePath = sharedContainerURL.appendingPathComponent(imageName).path
             if let image = UIImage(contentsOfFile: imagePath) {
+                
+                let _ = print(imagePath)
+                
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
