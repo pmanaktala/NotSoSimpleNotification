@@ -1,7 +1,5 @@
 import SwiftUI
-import ActivityKit
-
-import SwiftUI
+import BackgroundTasks
 import ActivityKit
 
 struct ContentView: View {
@@ -50,6 +48,40 @@ struct ContentView: View {
                 )
             }
         }
+        .onAppear {
+            registerBackgroundTasks()
+        }
+    }
+
+    func registerBackgroundTasks() {
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.pmanaktala.refresh", using: nil) { task in
+            handleAppRefresh(task: task as! BGAppRefreshTask)
+        }
+    }
+
+    func handleAppRefresh(task: BGAppRefreshTask) {
+        task.expirationHandler = {
+            // Handle the task expiration
+            task.setTaskCompleted(success: false)
+        }
+
+        // Perform the task's work
+        Task {
+            await animateLiveActivity() // Or any other relevant function
+        }
+
+        task.setTaskCompleted(success: true)
+        scheduleAppRefresh() // Reschedule the task
+    }
+
+    func scheduleAppRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: "com.pmanaktala.refresh")
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes later
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            print("Could not schedule app refresh: \(error)")
+        }
     }
 
     func startLiveActivity(with message: String, pokemonNumber: Int, gifData: Data) async {
@@ -66,6 +98,7 @@ struct ContentView: View {
                 content: activityContent,
                 pushType: nil
             )
+            scheduleAppRefresh() // Schedule background task
         } catch {
             print("Error starting activity: \(error.localizedDescription)")
         }
@@ -75,7 +108,7 @@ struct ContentView: View {
         guard let activity = activity else { return }
         guard !frameNames.isEmpty else { return }
 
-        let frameRate: Double = 60.0
+        let frameRate: Double = 60.0 // Adjusted frame rate
         let frameDuration: Double = 1.0 / frameRate
 
         for i in 0..<frameNames.count {
@@ -93,11 +126,14 @@ struct ContentView: View {
                 try await Task.sleep(nanoseconds: UInt64(frameDuration * 1_000_000_000)) // Sleep between frames
             } catch {
                 print("Error updating activity: \(error.localizedDescription)")
+                break
             }
         }
 
         // Loop the animation
-        await animateLiveActivity()
+        Task {
+            await animateLiveActivity()
+        }
     }
 
     func stopLiveActivity() async {
@@ -114,7 +150,6 @@ struct ContentView: View {
         }
         return gifData
     }
-
 
     func extractAndSaveFrames(from gifData: Data, for pokemonNumber: Int) -> [String] {
         var frameNames: [String] = []
@@ -185,28 +220,3 @@ struct ContentView: View {
         }
     }
 }
-
-import SwiftUI
-
-struct AnimationView: View {
-    var frameNames: [String]
-    var activity: Activity<LiveActivityModelAttributes>? // Pass the activity
-
-    var body: some View {
-        VStack {
-            if frameNames.isEmpty {
-                Text("No animation to display")
-            } else {
-                if let activity = activity {
-                    ImageSequenceView(frameNames: frameNames, currentFrame: activity.content.state.currentFrame)
-                        .frame(width: 100, height: 100)
-                        .padding()
-                } else {
-                    Text("No active Live Activity")
-                }
-            }
-        }
-    }
-}
-
-

@@ -40,3 +40,4 @@ struct NotSoSimpleNotificationWidgetBundle: WidgetBundle {
         NotSoSimpleNotificationWidget()
     }
 }
+
