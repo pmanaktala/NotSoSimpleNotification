@@ -3,11 +3,17 @@ import Foundation
 
 struct LiveActivityModelAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        // Properties to update during the live activity
         var message: String
         var pokemonNumber: Int
+        var frameNames: [String]
+
+        init(message: String, pokemonNumber: Int, frameNames: [String], currentFrame: Int = 0) {
+            self.message = message
+            self.pokemonNumber = pokemonNumber
+            self.frameNames = frameNames
+        }
     }
-    
-    // Properties set when the live activity starts
+
     var name: String
 }
+

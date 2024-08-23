@@ -12,6 +12,7 @@ struct MessageView: View {
     @Binding var userInput: String
 
     var body: some View {
+        
         VStack {
             TextField("Enter your message", text: $userInput)
                 .textFieldStyle(RoundedBorderTextFieldStyle())

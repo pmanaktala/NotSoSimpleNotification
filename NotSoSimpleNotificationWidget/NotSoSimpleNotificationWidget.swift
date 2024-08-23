@@ -1,5 +1,5 @@
-import WidgetKit
 import SwiftUI
+import WidgetKit
 import ActivityKit
 
 struct NotSoSimpleNotificationWidget: Widget {
@@ -9,17 +9,16 @@ struct NotSoSimpleNotificationWidget: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    GIFImageView(imageName: "\(context.state.pokemonNumber)")
-                        .frame(width: 25, height: 25)
+                    ImageSequenceView(frameNames: context.state.frameNames)
+                        .frame(width: 50, height: 50)
                 }
             } compactLeading: {
-                // Minimal representation with only the Pokémon GIF
-                GIFImageView(imageName: "\(context.state.pokemonNumber)")
+                ImageSequenceView(frameNames: context.state.frameNames)
                     .frame(width: 25, height: 25)
             } compactTrailing: {
-                EmptyView() // No need for extra views
+                EmptyView()
             } minimal: {
-                GIFImageView(imageName: "\(context.state.pokemonNumber)")
+                ImageSequenceView(frameNames: context.state.frameNames)
                     .frame(width: 20, height: 20)
             }
         }
@@ -28,10 +27,10 @@ struct NotSoSimpleNotificationWidget: Widget {
 
 struct LiveActivityView: View {
     let context: ActivityViewContext<LiveActivityModelAttributes>
-    
+
     var body: some View {
-        // Just an empty view as the focus is only on Pokémon GIFs in Dynamic Island
-        EmptyView()
+        ImageSequenceView(frameNames: context.state.frameNames)
+            .frame(width: 75, height: 75)
     }
 }
 
@@ -41,3 +40,7 @@ struct NotSoSimpleNotificationWidgetBundle: WidgetBundle {
         NotSoSimpleNotificationWidget()
     }
 }
+
+
+
+
